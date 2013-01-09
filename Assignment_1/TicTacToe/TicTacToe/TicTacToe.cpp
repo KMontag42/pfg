@@ -57,9 +57,6 @@ class IPlayer
 public:
 	virtual void SetTurn(const char * turn) = 0;
 	virtual const char * GetTurn() const = 0;
-private:
-	char i_turn[5];
-	mutable int m_iMovesMade;
 };
 
 class CHumanPlayer : public IPlayer
@@ -67,15 +64,15 @@ class CHumanPlayer : public IPlayer
 public:
 	virtual void SetTurn(const char * turn)
 	{
-		::strcpy_s(i_turn, turn);
+		::strcpy(c_turn, turn);
 	}
 	virtual const char * GetTurn() const
 	{
-		return i_turn;
+		return c_turn;
 	}
 
 private:
-	char i_turn[1];
+	char c_turn[1];
 	mutable int m_iMovesMade;
 };	
 
@@ -84,11 +81,11 @@ class CAIPlayer : public IPlayer
 public:
 	virtual void SetTurn(const char * turn)
 	{
-		::strcpy_s(i_turn, turn);
+		::strcpy(c_turn, turn);
 	}
 	virtual const char * GetTurn() const
 	{
-		return i_turn;
+		return c_turn;
 	}
 
 	void DecideOnMove()
@@ -97,7 +94,7 @@ public:
 	};
 
 private:
-	char i_turn[1];
+	char c_turn[1];
 	mutable int m_iMovesMade;
 };	
 
@@ -108,6 +105,7 @@ public:
 	void StartGame(const char turn_pick);
 	void NextTurn();
 	bool CheckForWin();
+	CBoard GetBoard();
 	void EndGame();
 private:
 	CBoard board;
@@ -122,7 +120,7 @@ void CTicTacToe::StartGame(const char turn_pick) {
 	human_player = CHumanPlayer();
 	ai_player = CAIPlayer();
 
-	if (turn_pick == 88 || turn_pick == 120)
+	if (turn_pick == 'X' || turn_pick == 'x')
 	{
 		human_player.SetTurn("X");
 		ai_player.SetTurn("O");
@@ -133,7 +131,7 @@ void CTicTacToe::StartGame(const char turn_pick) {
 		ai_player.SetTurn("X");
 	}
 	
-	c_current_turn[1] = 'X';
+	::strcpy(c_current_turn, "X");
 }
 
 void CTicTacToe::NextTurn() {
@@ -141,9 +139,9 @@ void CTicTacToe::NextTurn() {
 	// if human player, prompt for move
 	// if ai player, make move
 	// advance turn counter
-	if (c_current_turn == "X")
+	if (c_current_turn[0] == 'X')
 	{
-		if (human_player.GetTurn() == "X")
+		if (human_player.GetTurn()[0] == 'X')
 		{
 			int row_in, col_in;
 			std::cout << "Row? ";
@@ -160,9 +158,9 @@ void CTicTacToe::NextTurn() {
 		}
 		c_current_turn[1] = 'O';
 	}
-	else if (c_current_turn == "O")
+	else if (c_current_turn[0] == 'O')
 	{
-		if (human_player.GetTurn() == "O")
+		if (human_player.GetTurn()[0] == 'O')
 		{
 			int row_in, col_in;
 			std::cout << "Row? ";
@@ -186,27 +184,47 @@ bool CTicTacToe::CheckForWin() {
 	// check current board state for 3 in a row
 	// if 3 in a row, return True
 	// else return False
-	std::cout << board.GetBoard()[0] << board.GetBoard()[1] << board.GetBoard()[2];
 	// horizontal
-	if (board.GetBoard()[0] == board.GetBoard()[1] == board.GetBoard()[2])
+	if (board.GetBoard()[0] == 'X' && board.GetBoard()[1] == 'X' && board.GetBoard()[2] == 'X')
 		return true;
-	else if (board.GetBoard()[3] == board.GetBoard()[4] == board.GetBoard()[5])
+	else if (board.GetBoard()[3] == 'X' && board.GetBoard()[4] == 'X' && board.GetBoard()[5] == 'X')
 		return true;
-	else if (board.GetBoard()[6] == board.GetBoard()[7] == board.GetBoard()[8])
+	else if (board.GetBoard()[6] == 'X' && board.GetBoard()[7] == 'X' && board.GetBoard()[8] == 'X')
 		return true;
 
 	// diagonal
-	else if (board.GetBoard()[0] == board.GetBoard()[4] == board.GetBoard()[8])
+	else if (board.GetBoard()[0] == 'X' && board.GetBoard()[4] == 'X' && board.GetBoard()[8] == 'X')
 		return true;
-	else if (board.GetBoard()[2] == board.GetBoard()[4] == board.GetBoard()[6])
+	else if (board.GetBoard()[2] == 'X' && board.GetBoard()[4] == 'X' && board.GetBoard()[6] == 'X')
 		return true;
 
 	// vertical
-	else if (board.GetBoard()[0] == board.GetBoard()[3] == board.GetBoard()[6])
+	else if (board.GetBoard()[0] == 'X' && board.GetBoard()[3] == 'X' && board.GetBoard()[6] == 'X')
 		return true;
-	else if (board.GetBoard()[1] == board.GetBoard()[4] == board.GetBoard()[7])
+	else if (board.GetBoard()[1] == 'X' && board.GetBoard()[4] == 'X' && board.GetBoard()[7] == 'X')
 		return true;
-	else if (board.GetBoard()[2] == board.GetBoard()[5] == board.GetBoard()[8])
+	else if (board.GetBoard()[2] == 'X' && board.GetBoard()[5] == 'X' && board.GetBoard()[8] == 'X')
+		return true;
+
+	else if (board.GetBoard()[0] == board.GetBoard()[1] == board.GetBoard()[2] == 'O')
+		return true;
+	else if (board.GetBoard()[3] == board.GetBoard()[4] == board.GetBoard()[5] == 'O')
+		return true;
+	else if (board.GetBoard()[6] == board.GetBoard()[7] == board.GetBoard()[8] == 'O')
+		return true;
+
+	// diagonal
+	else if (board.GetBoard()[0] == board.GetBoard()[4] == board.GetBoard()[8] == 'O')
+		return true;
+	else if (board.GetBoard()[2] == board.GetBoard()[4] == board.GetBoard()[6] == 'O')
+		return true;
+
+	// vertical
+	else if (board.GetBoard()[0] == board.GetBoard()[3] == board.GetBoard()[6] == 'O')
+		return true;
+	else if (board.GetBoard()[1] == board.GetBoard()[4] == board.GetBoard()[7] == 'O')
+		return true;
+	else if (board.GetBoard()[2] == board.GetBoard()[5] == board.GetBoard()[8] == 'O')
 		return true;
 	else
 		return false;
@@ -221,6 +239,11 @@ void CTicTacToe::EndGame() {
 	else{}
 }
 
+CBoard CTicTacToe::GetBoard()
+{
+	return board;
+}
+
 int _tmain(int argc, _TCHAR* argv[])
 {
 	CTicTacToe game = CTicTacToe();
@@ -230,10 +253,12 @@ int _tmain(int argc, _TCHAR* argv[])
 	std::cin >> turn_pick;
 	
 	game.StartGame(turn_pick);
+	game.GetBoard().DrawBoard();
 	
 	while (!game.CheckForWin())
 	{
 		game.NextTurn();
+		game.GetBoard().DrawBoard();
 	}
 
 	game.EndGame();
