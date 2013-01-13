@@ -8,8 +8,8 @@ class CBoard
 public:
 	const std::valarray<char> & GetBoard() const;
 	CBoard();
-	const void MakeMove(int row, int col, const char *turn);
-	const void MakeMoveAI(int index, const char *turn);
+	const void MakeMove(const int &row, const int &col, const char *turn);
+	const void MakeMoveAI(const int &index, const char *turn);
 	const void DrawBoard();
 private:
 	std::valarray<char> vaMatrix;
@@ -26,7 +26,7 @@ CBoard::CBoard()
 	vaMatrix = std::valarray<char>(3*3);
 }
 
-const void CBoard::MakeMove(int row, int col, const char *turn)
+const void CBoard::MakeMove(const int &row, const int &col, const char *turn)
 {
 	if (row == 1)
 		vaMatrix[col-1] = *turn;
@@ -36,7 +36,7 @@ const void CBoard::MakeMove(int row, int col, const char *turn)
 		vaMatrix[((row*2)+col)-1] = *turn;
 }
 
-const void CBoard::MakeMoveAI(int index, const char *turn)
+const void CBoard::MakeMoveAI(const int &index, const char *turn)
 {
 	vaMatrix[index] = *turn;
 }
@@ -94,15 +94,7 @@ public:
 		return c_turn;
 	}
 
-	void DecideOnMove(CBoard & board)
-	{
-		move_made = false;
-		FillWins(board, c_turn, c_turn);
-		BlockWins(board);
-		SetTrap(board, c_turn, c_turn);
-		BlockTrap(board);
-		RandomMove(board);
-	};
+	void DecideOnMove(CBoard & board);
 
 private:
 	char c_turn[1];
@@ -141,7 +133,7 @@ void CAIPlayer::FillWins(CBoard & board, const char *look_for, const char *fill_
 				board.MakeMoveAI(0 + (i*3), fill_with);
 				move_made = true;
 			}
-			else if (board.GetBoard()[0 + (i*3)] == look_for[0] && board.GetBoard()[1 + (i*3)] == NULL && board.GetBoard()[2 + (i*3)] == look_for[0])
+ 			else if (board.GetBoard()[0 + (i*3)] == look_for[0] && board.GetBoard()[1 + (i*3)] == NULL && board.GetBoard()[2 + (i*3)] == look_for[0])
 			{
 				board.MakeMoveAI(1 + (i*3), fill_with);
 				move_made = true;
@@ -170,38 +162,41 @@ void CAIPlayer::FillWins(CBoard & board, const char *look_for, const char *fill_
 			}
 		}
 
-		// diagonal top left to bot right
-		if (board.GetBoard()[0] == NULL && board.GetBoard()[4] == look_for[0] && board.GetBoard()[8] == look_for[0])
+		// diagonal top left to bot right, added the && !move_made to fix a bug where AI would take 2 turns
+		if (!move_made)
 		{
-			board.MakeMoveAI(0, fill_with);
-			move_made = true;
-		}
-		else if (board.GetBoard()[0] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[8] == look_for[0])
-		{
-			board.MakeMoveAI(4, fill_with);
-			move_made = true;
-		}
-		else if (board.GetBoard()[0] == NULL && board.GetBoard()[4] == look_for[0] && board.GetBoard()[8] == NULL)
-		{
-			board.MakeMoveAI(8, fill_with);
-			move_made = true;
-		}
+			if (board.GetBoard()[0] == NULL && board.GetBoard()[4] == look_for[0] && board.GetBoard()[8] == look_for[0])
+			{
+				board.MakeMoveAI(0, fill_with);
+				move_made = true;
+			}
+			else if (board.GetBoard()[0] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[8] == look_for[0])
+			{
+				board.MakeMoveAI(4, fill_with);
+				move_made = true;
+			}
+			else if (board.GetBoard()[0] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[8] == NULL)
+			{
+				board.MakeMoveAI(8, fill_with);
+				move_made = true;
+			}
 
-		// diagonal top right to bot left
-		else if (board.GetBoard()[2] == NULL && board.GetBoard()[4] == look_for[0] && board.GetBoard()[6] == look_for[0])
-		{
-			board.MakeMoveAI(2, fill_with);
-			move_made = true;
-		}
-		else if (board.GetBoard()[2] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[6] == look_for[0])
-		{
-			board.MakeMoveAI(4, fill_with);
-			move_made = true;
-		}
-		else if (board.GetBoard()[2] == NULL && board.GetBoard()[4] == look_for[0] && board.GetBoard()[6] == NULL)
-		{
-			board.MakeMoveAI(6, fill_with);
-			move_made = true;
+			// diagonal top right to bot left
+			else if (board.GetBoard()[2] == NULL && board.GetBoard()[4] == look_for[0] && board.GetBoard()[6] == look_for[0])
+			{
+				board.MakeMoveAI(2, fill_with);
+				move_made = true;
+			}
+			else if (board.GetBoard()[2] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[6] == look_for[0])
+			{
+				board.MakeMoveAI(4, fill_with);
+				move_made = true;
+			}
+			else if (board.GetBoard()[2] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[6] == NULL)
+			{
+				board.MakeMoveAI(6, fill_with);
+				move_made = true;
+			}
 		}
 	}
 }
@@ -234,68 +229,68 @@ void CAIPlayer::SetTrap(CBoard & board, const char *look_for, const char *fill_w
 		}
 #pragma region bottom_row
 		// trap bottom row top left, bot mid, bot right (0, 7, 8)
-		if(board.GetBoard()[7] == look_for[0] && board.GetBoard()[8] == look_for[0] && board.GetBoard()[0] == NULL && board.GetBoard()[4] == NULL && board.GetBoard()[6] == NULL)
+		else if(board.GetBoard()[7] == look_for[0] && board.GetBoard()[8] == look_for[0] && board.GetBoard()[0] == NULL && board.GetBoard()[4] == NULL && board.GetBoard()[6] == NULL)
 		{
 			board.MakeMoveAI(0,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[0] == look_for[0] && board.GetBoard()[8] == look_for[0] && board.GetBoard()[7] == NULL && board.GetBoard()[4] == NULL && board.GetBoard()[6] == NULL)
+		else if(board.GetBoard()[0] == look_for[0] && board.GetBoard()[8] == look_for[0] && board.GetBoard()[7] == NULL && board.GetBoard()[4] == NULL && board.GetBoard()[6] == NULL)
 		{
 			board.MakeMoveAI(7,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[7] == look_for[0] && board.GetBoard()[0] == look_for[0] && board.GetBoard()[8] == NULL && board.GetBoard()[4] == NULL && board.GetBoard()[6] == NULL)
+		else if(board.GetBoard()[7] == look_for[0] && board.GetBoard()[0] == look_for[0] && board.GetBoard()[8] == NULL && board.GetBoard()[4] == NULL && board.GetBoard()[6] == NULL)
 		{
 			board.MakeMoveAI(8,fill_with);
 			move_made = true;
 		}
 
 		// trap bottom row, top left, bot left, bot right (0, 6, 8)
-		if(board.GetBoard()[6] == look_for[0] && board.GetBoard()[8] == look_for[0] && board.GetBoard()[0] == NULL && board.GetBoard()[3] == NULL && board.GetBoard()[4] == NULL)
+		else if(board.GetBoard()[6] == look_for[0] && board.GetBoard()[8] == look_for[0] && board.GetBoard()[0] == NULL && board.GetBoard()[3] == NULL && board.GetBoard()[4] == NULL)
 		{
 			board.MakeMoveAI(0,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[0] == look_for[0] && board.GetBoard()[8] == look_for[0] && board.GetBoard()[6] == NULL && board.GetBoard()[3] == NULL && board.GetBoard()[4] == NULL)
+		else if(board.GetBoard()[0] == look_for[0] && board.GetBoard()[8] == look_for[0] && board.GetBoard()[6] == NULL && board.GetBoard()[3] == NULL && board.GetBoard()[4] == NULL)
 		{
 			board.MakeMoveAI(6,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[6] == look_for[0] && board.GetBoard()[0] == look_for[0] && board.GetBoard()[8] == NULL && board.GetBoard()[3] == NULL && board.GetBoard()[4] == NULL)
+		else if(board.GetBoard()[6] == look_for[0] && board.GetBoard()[0] == look_for[0] && board.GetBoard()[8] == NULL && board.GetBoard()[3] == NULL && board.GetBoard()[4] == NULL)
 		{
 			board.MakeMoveAI(8,fill_with);
 			move_made = true;
 		}
 
 		// trap bottom row middle, bot mid, bot right (4, 7, 8)
-		if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[8] == look_for[0] && board.GetBoard()[0] == NULL && board.GetBoard()[6] == NULL && board.GetBoard()[7] == NULL)
+		else if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[8] == look_for[0] && board.GetBoard()[0] == NULL && board.GetBoard()[6] == NULL && board.GetBoard()[7] == NULL)
 		{
 			board.MakeMoveAI(7,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[7] == look_for[0] && board.GetBoard()[8] == look_for[0] && board.GetBoard()[0] == NULL && board.GetBoard()[6] == NULL && board.GetBoard()[4] == NULL)
+		else if(board.GetBoard()[7] == look_for[0] && board.GetBoard()[8] == look_for[0] && board.GetBoard()[0] == NULL && board.GetBoard()[6] == NULL && board.GetBoard()[4] == NULL)
 		{
 			board.MakeMoveAI(4,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[7] == look_for[0] && board.GetBoard()[0] == NULL && board.GetBoard()[6] == NULL && board.GetBoard()[8] == NULL)
+		else if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[7] == look_for[0] && board.GetBoard()[0] == NULL && board.GetBoard()[6] == NULL && board.GetBoard()[8] == NULL)
 		{
 			board.MakeMoveAI(8,fill_with);
 			move_made = true;
 		}
 
 		// trap bottom row middle, bot left, bot right (4, 6, 8)
-		if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[8] == look_for[0] && board.GetBoard()[6] == NULL && board.GetBoard()[0] == NULL && board.GetBoard()[7] == NULL)
+		else if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[8] == look_for[0] && board.GetBoard()[6] == NULL && board.GetBoard()[0] == NULL && board.GetBoard()[7] == NULL)
 		{
 			board.MakeMoveAI(6,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[6] == look_for[0] && board.GetBoard()[8] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[0] == NULL && board.GetBoard()[7] == NULL)
+		else if(board.GetBoard()[6] == look_for[0] && board.GetBoard()[8] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[0] == NULL && board.GetBoard()[7] == NULL)
 		{
 			board.MakeMoveAI(4,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[6] == look_for[0] && board.GetBoard()[8] == NULL && board.GetBoard()[0] == NULL && board.GetBoard()[7] == NULL)
+		else if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[6] == look_for[0] && board.GetBoard()[8] == NULL && board.GetBoard()[0] == NULL && board.GetBoard()[7] == NULL)
 		{
 			board.MakeMoveAI(8,fill_with);
 			move_made = true;
@@ -304,68 +299,68 @@ void CAIPlayer::SetTrap(CBoard & board, const char *look_for, const char *fill_w
 
 #pragma region top_row
 		// trap top row top left, top mid, bot right (0, 1, 8)
-		if(board.GetBoard()[1] == look_for[0] && board.GetBoard()[8] == look_for[0] && board.GetBoard()[0] == NULL && board.GetBoard()[4] == NULL && board.GetBoard()[2] == NULL)
+		else if(board.GetBoard()[1] == look_for[0] && board.GetBoard()[8] == look_for[0] && board.GetBoard()[0] == NULL && board.GetBoard()[4] == NULL && board.GetBoard()[2] == NULL)
 		{
 			board.MakeMoveAI(0,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[0] == look_for[0] && board.GetBoard()[8] == look_for[0] && board.GetBoard()[1] == NULL && board.GetBoard()[4] == NULL && board.GetBoard()[2] == NULL)
+		else if(board.GetBoard()[0] == look_for[0] && board.GetBoard()[8] == look_for[0] && board.GetBoard()[1] == NULL && board.GetBoard()[4] == NULL && board.GetBoard()[2] == NULL)
 		{
 			board.MakeMoveAI(1,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[1] == look_for[0] && board.GetBoard()[0] == look_for[0] && board.GetBoard()[8] == NULL && board.GetBoard()[4] == NULL && board.GetBoard()[2] == NULL)
+		else if(board.GetBoard()[1] == look_for[0] && board.GetBoard()[0] == look_for[0] && board.GetBoard()[8] == NULL && board.GetBoard()[4] == NULL && board.GetBoard()[2] == NULL)
 		{
 			board.MakeMoveAI(8,fill_with);
 			move_made = true;
 		}
 
 		// trap top row, top left, top right, bot right (0, 2, 8)
-		if(board.GetBoard()[2] == look_for[0] && board.GetBoard()[8] == look_for[0] && board.GetBoard()[0] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[4] == NULL)
+		else if(board.GetBoard()[2] == look_for[0] && board.GetBoard()[8] == look_for[0] && board.GetBoard()[0] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[4] == NULL)
 		{
 			board.MakeMoveAI(0,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[0] == look_for[0] && board.GetBoard()[8] == look_for[0] && board.GetBoard()[2] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[4] == NULL)
+		else if(board.GetBoard()[0] == look_for[0] && board.GetBoard()[8] == look_for[0] && board.GetBoard()[2] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[4] == NULL)
 		{
 			board.MakeMoveAI(2,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[2] == look_for[0] && board.GetBoard()[0] == look_for[0] && board.GetBoard()[8] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[4] == NULL)
+		else if(board.GetBoard()[2] == look_for[0] && board.GetBoard()[0] == look_for[0] && board.GetBoard()[8] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[4] == NULL)
 		{
 			board.MakeMoveAI(8,fill_with);
 			move_made = true;
 		}
 
 		// trap top row middle, top left, top mid (4, 0, 1)
-		if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[2] == look_for[0] && board.GetBoard()[1] == NULL && board.GetBoard()[2] == NULL && board.GetBoard()[8] == NULL)
+		else if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[2] == look_for[0] && board.GetBoard()[1] == NULL && board.GetBoard()[2] == NULL && board.GetBoard()[8] == NULL)
 		{
 			board.MakeMoveAI(1,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[1] == look_for[0] && board.GetBoard()[2] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[2] == NULL && board.GetBoard()[8] == NULL)
+		else if(board.GetBoard()[1] == look_for[0] && board.GetBoard()[2] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[2] == NULL && board.GetBoard()[8] == NULL)
 		{
 			board.MakeMoveAI(4,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[1] == look_for[0] && board.GetBoard()[0] == NULL && board.GetBoard()[2] == NULL && board.GetBoard()[8] == NULL)
+		else if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[1] == look_for[0] && board.GetBoard()[0] == NULL && board.GetBoard()[2] == NULL && board.GetBoard()[8] == NULL)
 		{
 			board.MakeMoveAI(0,fill_with);
 			move_made = true;
 		}
 
 		// trap top row middle, top left, top right (4, 0, 2)
-		if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[2] == look_for[0] && board.GetBoard()[2] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[8] == NULL)
+		else if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[2] == look_for[0] && board.GetBoard()[2] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[8] == NULL)
 		{
 			board.MakeMoveAI(2,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[2] == look_for[0] && board.GetBoard()[6] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[8] == NULL)
+		else if(board.GetBoard()[2] == look_for[0] && board.GetBoard()[6] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[8] == NULL)
 		{
 			board.MakeMoveAI(4,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[2] == look_for[0] && board.GetBoard()[0] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[8] == NULL)
+		else if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[2] == look_for[0] && board.GetBoard()[0] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[8] == NULL)
 		{
 			board.MakeMoveAI(0,fill_with);
 			move_made = true;
@@ -374,68 +369,68 @@ void CAIPlayer::SetTrap(CBoard & board, const char *look_for, const char *fill_w
 
 #pragma region middle_row
 		// trap middle row top left, mid left, middle (0, 3, 4)
-		if(board.GetBoard()[0] == look_for[0] && board.GetBoard()[3] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[5] == NULL && board.GetBoard()[8] == NULL)
+		else if(board.GetBoard()[0] == look_for[0] && board.GetBoard()[3] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[5] == NULL && board.GetBoard()[8] == NULL)
 		{
 			board.MakeMoveAI(4,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[0] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[3] == NULL && board.GetBoard()[5] == NULL && board.GetBoard()[8] == NULL)
+		else if(board.GetBoard()[0] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[3] == NULL && board.GetBoard()[5] == NULL && board.GetBoard()[8] == NULL)
 		{
 			board.MakeMoveAI(3,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[3] == look_for[0] && board.GetBoard()[0] == NULL && board.GetBoard()[5] == NULL && board.GetBoard()[8] == NULL)
+		else if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[3] == look_for[0] && board.GetBoard()[0] == NULL && board.GetBoard()[5] == NULL && board.GetBoard()[8] == NULL)
 		{
 			board.MakeMoveAI(0,fill_with);
 			move_made = true;
 		}
 
 		// trap middle row bot right, mid left, middle (8, 3, 4)
-		if(board.GetBoard()[8] == look_for[0] && board.GetBoard()[3] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[5] == NULL && board.GetBoard()[0] == NULL)
+		else if(board.GetBoard()[8] == look_for[0] && board.GetBoard()[3] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[5] == NULL && board.GetBoard()[0] == NULL)
 		{
 			board.MakeMoveAI(4,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[8] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[3] == NULL && board.GetBoard()[5] == NULL && board.GetBoard()[0] == NULL)
+		else if(board.GetBoard()[8] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[3] == NULL && board.GetBoard()[5] == NULL && board.GetBoard()[0] == NULL)
 		{
 			board.MakeMoveAI(3,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[3] == look_for[0] && board.GetBoard()[8] == NULL && board.GetBoard()[5] == NULL && board.GetBoard()[0] == NULL)
+		else if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[3] == look_for[0] && board.GetBoard()[8] == NULL && board.GetBoard()[5] == NULL && board.GetBoard()[0] == NULL)
 		{
 			board.MakeMoveAI(8,fill_with);
 			move_made = true;
 		}
 
 		// trap middle row top left, middle, mid right (0, 4, 5)
-		if(board.GetBoard()[0] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[5] == NULL && board.GetBoard()[3] == NULL && board.GetBoard()[8] == NULL)
+		else if(board.GetBoard()[0] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[5] == NULL && board.GetBoard()[3] == NULL && board.GetBoard()[8] == NULL)
 		{
 			board.MakeMoveAI(5,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[0] == look_for[0] && board.GetBoard()[5] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[3] == NULL && board.GetBoard()[8] == NULL)
+		else if(board.GetBoard()[0] == look_for[0] && board.GetBoard()[5] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[3] == NULL && board.GetBoard()[8] == NULL)
 		{
 			board.MakeMoveAI(4,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[5] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[0] == NULL && board.GetBoard()[3] == NULL && board.GetBoard()[8] == NULL)
+		else if(board.GetBoard()[5] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[0] == NULL && board.GetBoard()[3] == NULL && board.GetBoard()[8] == NULL)
 		{
 			board.MakeMoveAI(0,fill_with);
 			move_made = true;
 		}
 
 		// trap middle row bot right, middle, mid right (8, 4, 5)
-		if(board.GetBoard()[8] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[5] == NULL && board.GetBoard()[3] == NULL && board.GetBoard()[0] == NULL)
+		else if(board.GetBoard()[8] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[5] == NULL && board.GetBoard()[3] == NULL && board.GetBoard()[0] == NULL)
 		{
 			board.MakeMoveAI(5,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[8] == look_for[0] && board.GetBoard()[5] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[3] == NULL && board.GetBoard()[0] == NULL)
+		else if(board.GetBoard()[8] == look_for[0] && board.GetBoard()[5] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[3] == NULL && board.GetBoard()[0] == NULL)
 		{
 			board.MakeMoveAI(4,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[5] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[8] == NULL && board.GetBoard()[3] == NULL && board.GetBoard()[0] == NULL)
+		else if(board.GetBoard()[5] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[8] == NULL && board.GetBoard()[3] == NULL && board.GetBoard()[0] == NULL)
 		{
 			board.MakeMoveAI(8,fill_with);
 			move_made = true;
@@ -444,68 +439,68 @@ void CAIPlayer::SetTrap(CBoard & board, const char *look_for, const char *fill_w
 
 #pragma region middle_col
 		// trap middle col top left, top mid, middle (0, 1, 4)
-		if(board.GetBoard()[0] == look_for[0] && board.GetBoard()[1] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[7] == NULL && board.GetBoard()[8] == NULL)
+		else if(board.GetBoard()[0] == look_for[0] && board.GetBoard()[1] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[7] == NULL && board.GetBoard()[8] == NULL)
 		{
 			board.MakeMoveAI(4,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[0] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[1] == NULL && board.GetBoard()[7] == NULL && board.GetBoard()[8] == NULL)
+		else if(board.GetBoard()[0] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[1] == NULL && board.GetBoard()[7] == NULL && board.GetBoard()[8] == NULL)
 		{
 			board.MakeMoveAI(1,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[1] == look_for[0] && board.GetBoard()[0] == NULL && board.GetBoard()[7] == NULL && board.GetBoard()[8] == NULL)
+		else if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[1] == look_for[0] && board.GetBoard()[0] == NULL && board.GetBoard()[7] == NULL && board.GetBoard()[8] == NULL)
 		{
 			board.MakeMoveAI(0,fill_with);
 			move_made = true;
 		}
 
 		// trap middle col bot right, top mid, middle (8, 1, 4)
-		if(board.GetBoard()[8] == look_for[0] && board.GetBoard()[1] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[7] == NULL && board.GetBoard()[0] == NULL)
+		else if(board.GetBoard()[8] == look_for[0] && board.GetBoard()[1] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[7] == NULL && board.GetBoard()[0] == NULL)
 		{
 			board.MakeMoveAI(4,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[8] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[1] == NULL && board.GetBoard()[7] == NULL && board.GetBoard()[0] == NULL)
+		else if(board.GetBoard()[8] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[1] == NULL && board.GetBoard()[7] == NULL && board.GetBoard()[0] == NULL)
 		{
 			board.MakeMoveAI(1,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[1] == look_for[0] && board.GetBoard()[8] == NULL && board.GetBoard()[7] == NULL && board.GetBoard()[0] == NULL)
+		else if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[1] == look_for[0] && board.GetBoard()[8] == NULL && board.GetBoard()[7] == NULL && board.GetBoard()[0] == NULL)
 		{
 			board.MakeMoveAI(8,fill_with);
 			move_made = true;
 		}
 
 		// trap middle col top left, middle, bot mid (0, 4, 7)
-		if(board.GetBoard()[0] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[7] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[8] == NULL)
+		else if(board.GetBoard()[0] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[7] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[8] == NULL)
 		{
 			board.MakeMoveAI(7,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[0] == look_for[0] && board.GetBoard()[7] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[8] == NULL)
+		else if(board.GetBoard()[0] == look_for[0] && board.GetBoard()[7] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[8] == NULL)
 		{
 			board.MakeMoveAI(4,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[7] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[0] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[8] == NULL)
+		else if(board.GetBoard()[7] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[0] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[8] == NULL)
 		{
 			board.MakeMoveAI(0,fill_with);
 			move_made = true;
 		}
 
 		// trap middle col bot right, middle, bot mid (8, 4, 7)
-		if(board.GetBoard()[8] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[7] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[0] == NULL)
+		else if(board.GetBoard()[8] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[7] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[0] == NULL)
 		{
 			board.MakeMoveAI(7,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[8] == look_for[0] && board.GetBoard()[7] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[0] == NULL)
+		else if(board.GetBoard()[8] == look_for[0] && board.GetBoard()[7] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[0] == NULL)
 		{
 			board.MakeMoveAI(4,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[7] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[8] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[0] == NULL)
+		else if(board.GetBoard()[7] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[8] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[0] == NULL)
 		{
 			board.MakeMoveAI(8,fill_with);
 			move_made = true;
@@ -516,75 +511,75 @@ void CAIPlayer::SetTrap(CBoard & board, const char *look_for, const char *fill_w
 
 #pragma region tr_bl_diag
 		// trap diagonal top left to bot right
-		if(board.GetBoard()[8] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[0] == NULL && board.GetBoard()[7] == NULL && board.GetBoard()[6] == NULL)
+		else if(board.GetBoard()[8] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[0] == NULL && board.GetBoard()[7] == NULL && board.GetBoard()[6] == NULL)
 		{
 			board.MakeMoveAI(6,fill_with);
 			move_made = true;
 		}
 #pragma region bottom_row
 		// trap bottom row top right, bot mid, bot left (2, 7, 6)
-		if(board.GetBoard()[7] == look_for[0] && board.GetBoard()[6] == look_for[0] && board.GetBoard()[2] == NULL && board.GetBoard()[4] == NULL && board.GetBoard()[8] == NULL)
+		else if(board.GetBoard()[7] == look_for[0] && board.GetBoard()[6] == look_for[0] && board.GetBoard()[2] == NULL && board.GetBoard()[4] == NULL && board.GetBoard()[8] == NULL)
 		{
 			board.MakeMoveAI(2,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[2] == look_for[0] && board.GetBoard()[6] == look_for[0] && board.GetBoard()[7] == NULL && board.GetBoard()[4] == NULL && board.GetBoard()[8] == NULL)
+		else if(board.GetBoard()[2] == look_for[0] && board.GetBoard()[6] == look_for[0] && board.GetBoard()[7] == NULL && board.GetBoard()[4] == NULL && board.GetBoard()[8] == NULL)
 		{
 			board.MakeMoveAI(7,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[7] == look_for[0] && board.GetBoard()[2] == look_for[0] && board.GetBoard()[6] == NULL && board.GetBoard()[4] == NULL && board.GetBoard()[8] == NULL)
+		else if(board.GetBoard()[7] == look_for[0] && board.GetBoard()[2] == look_for[0] && board.GetBoard()[6] == NULL && board.GetBoard()[4] == NULL && board.GetBoard()[8] == NULL)
 		{
 			board.MakeMoveAI(6,fill_with);
 			move_made = true;
 		}
 
 		// trap bottom row, top right, bot left, bot right (2, 6, 8)
-		if(board.GetBoard()[6] == look_for[0] && board.GetBoard()[8] == look_for[0] && board.GetBoard()[2] == NULL && board.GetBoard()[5] == NULL && board.GetBoard()[4] == NULL)
+		else if(board.GetBoard()[6] == look_for[0] && board.GetBoard()[8] == look_for[0] && board.GetBoard()[2] == NULL && board.GetBoard()[5] == NULL && board.GetBoard()[4] == NULL)
 		{
 			board.MakeMoveAI(2,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[0] == look_for[0] && board.GetBoard()[8] == look_for[0] && board.GetBoard()[6] == NULL && board.GetBoard()[5] == NULL && board.GetBoard()[4] == NULL)
+		else if(board.GetBoard()[0] == look_for[0] && board.GetBoard()[8] == look_for[0] && board.GetBoard()[6] == NULL && board.GetBoard()[5] == NULL && board.GetBoard()[4] == NULL)
 		{
 			board.MakeMoveAI(6,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[6] == look_for[0] && board.GetBoard()[0] == look_for[0] && board.GetBoard()[8] == NULL && board.GetBoard()[5] == NULL && board.GetBoard()[4] == NULL)
+		else if(board.GetBoard()[6] == look_for[0] && board.GetBoard()[0] == look_for[0] && board.GetBoard()[8] == NULL && board.GetBoard()[5] == NULL && board.GetBoard()[4] == NULL)
 		{
 			board.MakeMoveAI(8,fill_with);
 			move_made = true;
 		}
 
 		// trap bottom row middle, bot left, bot mid (4, 6, 7)
-		if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[6] == look_for[0] && board.GetBoard()[2] == NULL && board.GetBoard()[8] == NULL && board.GetBoard()[7] == NULL)
+		else if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[6] == look_for[0] && board.GetBoard()[2] == NULL && board.GetBoard()[8] == NULL && board.GetBoard()[7] == NULL)
 		{
 			board.MakeMoveAI(7,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[7] == look_for[0] && board.GetBoard()[6] == look_for[0] && board.GetBoard()[2] == NULL && board.GetBoard()[8] == NULL && board.GetBoard()[4] == NULL)
+		else if(board.GetBoard()[7] == look_for[0] && board.GetBoard()[6] == look_for[0] && board.GetBoard()[2] == NULL && board.GetBoard()[8] == NULL && board.GetBoard()[4] == NULL)
 		{
 			board.MakeMoveAI(4,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[7] == look_for[0] && board.GetBoard()[2] == NULL && board.GetBoard()[8] == NULL && board.GetBoard()[6] == NULL)
+		else if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[7] == look_for[0] && board.GetBoard()[2] == NULL && board.GetBoard()[8] == NULL && board.GetBoard()[6] == NULL)
 		{
 			board.MakeMoveAI(6,fill_with);
 			move_made = true;
 		}
 
 		// trap bottom row middle, bot left, bot right (4, 6, 8)
-		if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[8] == look_for[0] && board.GetBoard()[6] == NULL && board.GetBoard()[2] == NULL && board.GetBoard()[7] == NULL)
+		else if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[8] == look_for[0] && board.GetBoard()[6] == NULL && board.GetBoard()[2] == NULL && board.GetBoard()[7] == NULL)
 		{
 			board.MakeMoveAI(6,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[6] == look_for[0] && board.GetBoard()[8] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[2] == NULL && board.GetBoard()[7] == NULL)
+		else if(board.GetBoard()[6] == look_for[0] && board.GetBoard()[8] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[2] == NULL && board.GetBoard()[7] == NULL)
 		{
 			board.MakeMoveAI(4,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[6] == look_for[0] && board.GetBoard()[8] == NULL && board.GetBoard()[2] == NULL && board.GetBoard()[7] == NULL)
+		else if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[6] == look_for[0] && board.GetBoard()[8] == NULL && board.GetBoard()[2] == NULL && board.GetBoard()[7] == NULL)
 		{
 			board.MakeMoveAI(8,fill_with);
 			move_made = true;
@@ -593,68 +588,68 @@ void CAIPlayer::SetTrap(CBoard & board, const char *look_for, const char *fill_w
 
 #pragma region top_row
 		// trap top row top right, top mid, bot left (2, 1, 6)
-		if(board.GetBoard()[1] == look_for[0] && board.GetBoard()[6] == look_for[0] && board.GetBoard()[2] == NULL && board.GetBoard()[4] == NULL && board.GetBoard()[0] == NULL)
+		else if(board.GetBoard()[1] == look_for[0] && board.GetBoard()[6] == look_for[0] && board.GetBoard()[2] == NULL && board.GetBoard()[4] == NULL && board.GetBoard()[0] == NULL)
 		{
 			board.MakeMoveAI(2,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[2] == look_for[0] && board.GetBoard()[6] == look_for[0] && board.GetBoard()[1] == NULL && board.GetBoard()[4] == NULL && board.GetBoard()[0] == NULL)
+		else if(board.GetBoard()[2] == look_for[0] && board.GetBoard()[6] == look_for[0] && board.GetBoard()[1] == NULL && board.GetBoard()[4] == NULL && board.GetBoard()[0] == NULL)
 		{
 			board.MakeMoveAI(1,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[1] == look_for[0] && board.GetBoard()[2] == look_for[0] && board.GetBoard()[6] == NULL && board.GetBoard()[4] == NULL && board.GetBoard()[0] == NULL)
+		else if(board.GetBoard()[1] == look_for[0] && board.GetBoard()[2] == look_for[0] && board.GetBoard()[6] == NULL && board.GetBoard()[4] == NULL && board.GetBoard()[0] == NULL)
 		{
 			board.MakeMoveAI(6,fill_with);
 			move_made = true;
 		}
 
 		// trap top row, top left, top right, bot left (0, 2, 6)
-		if(board.GetBoard()[2] == look_for[0] && board.GetBoard()[6] == look_for[0] && board.GetBoard()[0] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[4] == NULL)
+		else if(board.GetBoard()[2] == look_for[0] && board.GetBoard()[6] == look_for[0] && board.GetBoard()[0] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[4] == NULL)
 		{
 			board.MakeMoveAI(0,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[0] == look_for[0] && board.GetBoard()[6] == look_for[0] && board.GetBoard()[2] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[4] == NULL)
+		else if(board.GetBoard()[0] == look_for[0] && board.GetBoard()[6] == look_for[0] && board.GetBoard()[2] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[4] == NULL)
 		{
 			board.MakeMoveAI(2,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[2] == look_for[0] && board.GetBoard()[0] == look_for[0] && board.GetBoard()[6] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[4] == NULL)
+		else if(board.GetBoard()[2] == look_for[0] && board.GetBoard()[0] == look_for[0] && board.GetBoard()[6] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[4] == NULL)
 		{
 			board.MakeMoveAI(6,fill_with);
 			move_made = true;
 		}
 
 		// trap top row middle, top right, top mid (4, 0, 1)
-		if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[2] == look_for[0] && board.GetBoard()[1] == NULL && board.GetBoard()[2] == NULL && board.GetBoard()[8] == NULL)
+		else if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[2] == look_for[0] && board.GetBoard()[1] == NULL && board.GetBoard()[2] == NULL && board.GetBoard()[8] == NULL)
 		{
 			board.MakeMoveAI(1,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[1] == look_for[0] && board.GetBoard()[2] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[2] == NULL && board.GetBoard()[8] == NULL)
+		else if(board.GetBoard()[1] == look_for[0] && board.GetBoard()[2] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[2] == NULL && board.GetBoard()[8] == NULL)
 		{
 			board.MakeMoveAI(4,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[1] == look_for[0] && board.GetBoard()[0] == NULL && board.GetBoard()[2] == NULL && board.GetBoard()[8] == NULL)
+		else if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[1] == look_for[0] && board.GetBoard()[0] == NULL && board.GetBoard()[2] == NULL && board.GetBoard()[8] == NULL)
 		{
 			board.MakeMoveAI(0,fill_with);
 			move_made = true;
 		}
 
 		// trap top row middle, top left, top right (4, 0, 2)
-		if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[2] == look_for[0] && board.GetBoard()[2] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[8] == NULL)
+		else if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[2] == look_for[0] && board.GetBoard()[2] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[8] == NULL)
 		{
 			board.MakeMoveAI(2,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[2] == look_for[0] && board.GetBoard()[6] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[8] == NULL)
+		else if(board.GetBoard()[2] == look_for[0] && board.GetBoard()[6] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[8] == NULL)
 		{
 			board.MakeMoveAI(4,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[2] == look_for[0] && board.GetBoard()[0] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[8] == NULL)
+		else if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[2] == look_for[0] && board.GetBoard()[0] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[8] == NULL)
 		{
 			board.MakeMoveAI(0,fill_with);
 			move_made = true;
@@ -663,68 +658,68 @@ void CAIPlayer::SetTrap(CBoard & board, const char *look_for, const char *fill_w
 
 #pragma region middle_row
 		// trap middle row top left, mid left, middle (2, 3, 4)
-		if(board.GetBoard()[2] == look_for[0] && board.GetBoard()[3] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[5] == NULL && board.GetBoard()[6] == NULL)
+		else if(board.GetBoard()[2] == look_for[0] && board.GetBoard()[3] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[5] == NULL && board.GetBoard()[6] == NULL)
 		{
 			board.MakeMoveAI(4,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[2] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[3] == NULL && board.GetBoard()[5] == NULL && board.GetBoard()[6] == NULL)
+		else if(board.GetBoard()[2] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[3] == NULL && board.GetBoard()[5] == NULL && board.GetBoard()[6] == NULL)
 		{
 			board.MakeMoveAI(3,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[3] == look_for[0] && board.GetBoard()[2] == NULL && board.GetBoard()[5] == NULL && board.GetBoard()[6] == NULL)
+		else if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[3] == look_for[0] && board.GetBoard()[2] == NULL && board.GetBoard()[5] == NULL && board.GetBoard()[6] == NULL)
 		{
 			board.MakeMoveAI(2,fill_with);
 			move_made = true;
 		}
 
 		// trap middle row bot right, mid left, middle (6, 3, 4)
-		if(board.GetBoard()[6] == look_for[0] && board.GetBoard()[3] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[5] == NULL && board.GetBoard()[2] == NULL)
+		else if(board.GetBoard()[6] == look_for[0] && board.GetBoard()[3] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[5] == NULL && board.GetBoard()[2] == NULL)
 		{
 			board.MakeMoveAI(4,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[6] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[3] == NULL && board.GetBoard()[5] == NULL && board.GetBoard()[2] == NULL)
+		else if(board.GetBoard()[6] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[3] == NULL && board.GetBoard()[5] == NULL && board.GetBoard()[2] == NULL)
 		{
 			board.MakeMoveAI(3,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[3] == look_for[0] && board.GetBoard()[6] == NULL && board.GetBoard()[5] == NULL && board.GetBoard()[2] == NULL)
+		else if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[3] == look_for[0] && board.GetBoard()[6] == NULL && board.GetBoard()[5] == NULL && board.GetBoard()[2] == NULL)
 		{
 			board.MakeMoveAI(6,fill_with);
 			move_made = true;
 		}
 
 		// trap middle row top left, middle, mid right (2, 4, 5)
-		if(board.GetBoard()[2] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[5] == NULL && board.GetBoard()[3] == NULL && board.GetBoard()[6] == NULL)
+		else if(board.GetBoard()[2] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[5] == NULL && board.GetBoard()[3] == NULL && board.GetBoard()[6] == NULL)
 		{
 			board.MakeMoveAI(5,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[2] == look_for[0] && board.GetBoard()[5] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[3] == NULL && board.GetBoard()[6] == NULL)
+		else if(board.GetBoard()[2] == look_for[0] && board.GetBoard()[5] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[3] == NULL && board.GetBoard()[6] == NULL)
 		{
 			board.MakeMoveAI(4,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[5] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[2] == NULL && board.GetBoard()[3] == NULL && board.GetBoard()[6] == NULL)
+		else if(board.GetBoard()[5] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[2] == NULL && board.GetBoard()[3] == NULL && board.GetBoard()[6] == NULL)
 		{
 			board.MakeMoveAI(2,fill_with);
 			move_made = true;
 		}
 
 		// trap middle row bot right, middle, mid right (6, 4, 5)
-		if(board.GetBoard()[6] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[5] == NULL && board.GetBoard()[3] == NULL && board.GetBoard()[0] == NULL)
+		else if(board.GetBoard()[6] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[5] == NULL && board.GetBoard()[3] == NULL && board.GetBoard()[0] == NULL)
 		{
 			board.MakeMoveAI(5,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[6] == look_for[0] && board.GetBoard()[5] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[3] == NULL && board.GetBoard()[0] == NULL)
+		else if(board.GetBoard()[6] == look_for[0] && board.GetBoard()[5] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[3] == NULL && board.GetBoard()[0] == NULL)
 		{
 			board.MakeMoveAI(4,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[5] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[6] == NULL && board.GetBoard()[3] == NULL && board.GetBoard()[0] == NULL)
+		else if(board.GetBoard()[5] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[6] == NULL && board.GetBoard()[3] == NULL && board.GetBoard()[0] == NULL)
 		{
 			board.MakeMoveAI(6,fill_with);
 			move_made = true;
@@ -733,68 +728,68 @@ void CAIPlayer::SetTrap(CBoard & board, const char *look_for, const char *fill_w
 
 #pragma region middle_col
 		// trap middle col top left, top mid, middle (2, 1, 4)
-		if(board.GetBoard()[2] == look_for[0] && board.GetBoard()[1] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[7] == NULL && board.GetBoard()[6] == NULL)
+		else if(board.GetBoard()[2] == look_for[0] && board.GetBoard()[1] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[7] == NULL && board.GetBoard()[6] == NULL)
 		{
 			board.MakeMoveAI(4,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[2] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[1] == NULL && board.GetBoard()[7] == NULL && board.GetBoard()[6] == NULL)
+		else if(board.GetBoard()[2] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[1] == NULL && board.GetBoard()[7] == NULL && board.GetBoard()[6] == NULL)
 		{
 			board.MakeMoveAI(1,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[1] == look_for[0] && board.GetBoard()[2] == NULL && board.GetBoard()[7] == NULL && board.GetBoard()[6] == NULL)
+		else if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[1] == look_for[0] && board.GetBoard()[2] == NULL && board.GetBoard()[7] == NULL && board.GetBoard()[6] == NULL)
 		{
 			board.MakeMoveAI(2,fill_with);
 			move_made = true;
 		}
 
 		// trap middle col bot right, top mid, middle (6, 1, 4)
-		if(board.GetBoard()[6] == look_for[0] && board.GetBoard()[1] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[7] == NULL && board.GetBoard()[2] == NULL)
+		else if(board.GetBoard()[6] == look_for[0] && board.GetBoard()[1] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[7] == NULL && board.GetBoard()[2] == NULL)
 		{
 			board.MakeMoveAI(4,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[6] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[1] == NULL && board.GetBoard()[7] == NULL && board.GetBoard()[2] == NULL)
+		else if(board.GetBoard()[6] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[1] == NULL && board.GetBoard()[7] == NULL && board.GetBoard()[2] == NULL)
 		{
 			board.MakeMoveAI(1,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[1] == look_for[0] && board.GetBoard()[6] == NULL && board.GetBoard()[7] == NULL && board.GetBoard()[2] == NULL)
+		else if(board.GetBoard()[4] == look_for[0] && board.GetBoard()[1] == look_for[0] && board.GetBoard()[6] == NULL && board.GetBoard()[7] == NULL && board.GetBoard()[2] == NULL)
 		{
 			board.MakeMoveAI(6,fill_with);
 			move_made = true;
 		}
 
 		// trap middle col top left, middle, bot mid (2, 4, 7)
-		if(board.GetBoard()[2] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[7] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[6] == NULL)
+		else if(board.GetBoard()[2] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[7] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[6] == NULL)
 		{
 			board.MakeMoveAI(7,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[2] == look_for[0] && board.GetBoard()[7] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[6] == NULL)
+		else if(board.GetBoard()[2] == look_for[0] && board.GetBoard()[7] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[6] == NULL)
 		{
 			board.MakeMoveAI(4,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[7] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[2] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[6] == NULL)
+		else if(board.GetBoard()[7] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[2] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[6] == NULL)
 		{
 			board.MakeMoveAI(2,fill_with);
 			move_made = true;
 		}
 
 		// trap middle col bot right, middle, bot mid (6, 4, 7)
-		if(board.GetBoard()[6] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[7] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[2] == NULL)
+		else if(board.GetBoard()[6] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[7] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[2] == NULL)
 		{
 			board.MakeMoveAI(7,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[6] == look_for[0] && board.GetBoard()[7] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[2] == NULL)
+		else if(board.GetBoard()[6] == look_for[0] && board.GetBoard()[7] == look_for[0] && board.GetBoard()[4] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[2] == NULL)
 		{
 			board.MakeMoveAI(4,fill_with);
 			move_made = true;
 		}
-		if(board.GetBoard()[7] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[6] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[2] == NULL)
+		else if(board.GetBoard()[7] == look_for[0] && board.GetBoard()[4] == look_for[0] && board.GetBoard()[6] == NULL && board.GetBoard()[1] == NULL && board.GetBoard()[2] == NULL)
 		{
 			board.MakeMoveAI(6,fill_with);
 			move_made = true;
@@ -820,6 +815,16 @@ void CAIPlayer::BlockTrap(CBoard & board)
 	}
 }
 
+void CAIPlayer::DecideOnMove(CBoard & board)
+{
+	move_made = false;
+	FillWins(board, c_turn, c_turn);
+	BlockWins(board);
+	SetTrap(board, c_turn, c_turn);
+	BlockTrap(board);
+	RandomMove(board);
+};
+
 class CTicTacToe
 {
 public:
@@ -833,6 +838,7 @@ private:
 	CHumanPlayer human_player;
 	CAIPlayer ai_player;
 	char c_current_turn[1];
+	bool CheckForTie();
 };
 
 void CTicTacToe::StartGame(const char turn_pick) {
@@ -949,6 +955,16 @@ bool CTicTacToe::CheckForWin() {
 	else if (board.GetBoard()[2] == 'O' && board.GetBoard()[5] == 'O' && board.GetBoard()[8] == 'O')
 		return true;
 	else
+		return CheckForTie();
+}
+
+bool CTicTacToe::CheckForTie()
+{
+	if (board.GetBoard()[0] != NULL && board.GetBoard()[1] != NULL && board.GetBoard()[2] != NULL
+		 && board.GetBoard()[3] != NULL && board.GetBoard()[4] != NULL && board.GetBoard()[5] != NULL
+		  && board.GetBoard()[6] != NULL && board.GetBoard()[7] != NULL && board.GetBoard()[8] != NULL)
+		  return true;
+	else
 		return false;
 }
 
@@ -960,12 +976,14 @@ void CTicTacToe::EndGame() {
 	char choice;
 	if (human_player.GetTurn() == c_current_turn)
 	{
-		std::cout << "Gratz. New Game? " << std::endl;
+		std::cout << "YOU LOSE." << std::endl;
+		std::cout << "New Game? (y/n) ";
 		std::cin >> choice;
 	}
 	else
 	{
-		std::cout << "YOU LOSE. New Game? " << std::endl;
+		std::cout << "Good job, you didn't lose." << std::endl;
+		std::cout << "New Game? (y/n) ";
 		std::cin >> choice;
 	}
 }
