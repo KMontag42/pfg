@@ -11,6 +11,7 @@ public:
 	const void MakeMove(const int &row, const int &col, const char *turn);
 	const void MakeMoveAI(const int &index, const char *turn);
 	const void DrawBoard();
+	const bool CanMove(const int &row, const int &col);
 private:
 	std::valarray<char> vaMatrix;
 	mutable int m_iMovesMade;
@@ -56,6 +57,16 @@ const void CBoard::DrawBoard()
 	std::cout << "+    " << vaMatrix[6] << "       |     " << vaMatrix[7] << "      |     " << vaMatrix[8] << "      +" << std::endl;
 	std::cout << "+            |            |            +" << std::endl;
 	std::cout << "+--------------------------------------+" << std::endl;
+}
+
+const bool CBoard::CanMove(const int &row, const int &col)
+{
+	if (row == 1)
+		return (vaMatrix[col-1] == 'X' || vaMatrix[col-1] == 'O');
+	else if (row == 2)
+		return (vaMatrix[col+row] == 'X' || vaMatrix[col+row] == 'O');
+	else if (row == 3)
+		return (vaMatrix[((row*2)+col)-1] == 'X' || vaMatrix[((row*2)+col)-1] == 'O');
 }
 
 class IPlayer
@@ -871,10 +882,29 @@ void CTicTacToe::NextTurn() {
 		if (human_player.GetTurn()[0] == 'X')
 		{
 			int row_in, col_in;
-			std::cout << "Row? ";
-			std::cin >> row_in;
-			std::cout << "Col? ";
-			std::cin >> col_in;
+			do {
+				std::cout << "Take your turn, pick a space that is empty\n";
+				do {
+					std::cout << "Row? (1, 2, or 3) ";
+					while (!(std::cin >> row_in))
+					{
+						std::cout << "Please enter an integer value between 1 and 3 inclusive\n>";
+						std::cin.clear();
+						std::cin.ignore(1000, '\n');
+					}
+				} while (row_in != 1 && row_in != 2 && row_in != 3);
+
+				do {
+					std::cout << "Col? (1, 2, or 3) ";
+					while (!(std::cin >> col_in))
+					{
+						std::cout << "Please enter an integer value between 1 and 3 inclusive\n>";
+						std::cin.clear();
+						std::cin.ignore(1000, '\n');
+					}
+				} while (col_in != 1 && col_in != 2 && col_in != 3);
+
+			} while (board.CanMove(row_in, col_in));
 
 			board.MakeMove(row_in, col_in, human_player.GetTurn());
 		}
@@ -890,10 +920,29 @@ void CTicTacToe::NextTurn() {
 		if (human_player.GetTurn()[0] == 'O')
 		{
 			int row_in, col_in;
-			std::cout << "Row? ";
-			std::cin >> row_in;
-			std::cout << "Col? ";
-			std::cin >> col_in;
+			do {
+				std::cout << "Take your turn, pick a space that is empty\n";
+				do {
+					std::cout << "Row? (1, 2, or 3) ";
+					while (!(std::cin >> row_in))
+					{
+						std::cout << "Please enter an integer value between 1 and 3 inclusive\n>";
+						std::cin.clear();
+						std::cin.ignore(1000, '\n');
+					}
+				} while (row_in != 1 && row_in != 2 && row_in != 3);
+
+				do {
+					std::cout << "Col? (1, 2, or 3) ";
+					while (!(std::cin >> col_in))
+					{
+						std::cout << "Please enter an integer value between 1 and 3 inclusive\n>";
+						std::cin.clear();
+						std::cin.ignore(1000, '\n');
+					}
+				} while (col_in != 1 && col_in != 2 && col_in != 3);
+
+			} while (board.CanMove(row_in, col_in));
 
 			board.MakeMove(row_in, col_in, human_player.GetTurn());
 		}
@@ -973,18 +1022,34 @@ void CTicTacToe::EndGame() {
 	// previous player won the game
 	// show end screen
 	// prompt for new game
-	char choice;
+	char choice = 0;
 	if (human_player.GetTurn() == c_current_turn)
 	{
-		std::cout << "YOU LOSE." << std::endl;
-		std::cout << "New Game? (y/n) ";
-		std::cin >> choice;
+		do
+		{
+			std::cout << "YOU LOSE." << std::endl;
+			std::cout << "New Game? (y/n) ";
+			while (!(std::cin >> choice))
+			{
+				std::cout << "Please enter either y or n.\n>";
+				std::cin.clear();
+				std::cin.ignore(1000,'\n');
+			}
+		} while (choice != 'y' && choice != 'Y' && choice != 'n' && choice != 'N');
 	}
 	else
 	{
-		std::cout << "Good job, you didn't lose." << std::endl;
-		std::cout << "New Game? (y/n) ";
-		std::cin >> choice;
+		do
+		{
+			std::cout << "Good job, you didn't lose." << std::endl;
+			std::cout << "New Game? (y/n) ";
+			while (!(std::cin >> choice))
+			{
+				std::cout << "Please enter either y or n.\n>";
+				std::cin.clear();
+				std::cin.ignore(1000,'\n');
+			}
+		} while (choice != 'y' && choice != 'Y' && choice != 'n' && choice != 'N');
 	}
 }
 
@@ -998,8 +1063,16 @@ int _tmain(int argc, _TCHAR* argv[])
 	CTicTacToe game = CTicTacToe();
 	char turn_pick;
 
-	std::cout << "Player pick X's or O's:" << std::endl << "Enter either 'X' or 'O'" << std::endl;
-	std::cin >> turn_pick;
+	do
+	{
+		std::cout << "Choose your turn, either pick X's or O's:\n";
+		while (!(std::cin >> turn_pick))
+		{
+			std::cout << "Please enter either x or o to pick your turn\n>";
+			std::cin.clear();
+			std::cin.ignore(1000, '\n');
+		}
+	} while (turn_pick != 'X' && turn_pick != 'x' && turn_pick != 'O' && turn_pick != 'o');
 
 	game.StartGame(turn_pick);
 	game.GetBoard().DrawBoard();
